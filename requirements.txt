@@ -1,0 +1,12 @@
+numpy==1.26.4
+streamlit
+pandas
+haversine
+opencv-python-headless
+st-gsheets-connection
+qdrant-client
+streamlit-js-eval
+geopy
+--find-links https://download.pytorch.org/whl/torch_stable.html
+torch==2.0.1+cpu
+torchvision==0.15.2+cpu
