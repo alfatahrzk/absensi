@@ -1,5 +1,8 @@
 # Home.py
 import streamlit as st
+import qdrant_client
+
+st.warning(f"Versi Qdrant Client yang terinstall: {qdrant_client.__version__}")
 
 st.set_page_config(
     page_title="Sistem Absensi AI",
