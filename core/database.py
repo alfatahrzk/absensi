@@ -22,7 +22,7 @@ class VectorDB:
 
             # Tetap init client untuk fungsi save/create collection (karena biasanya yang error cuma search)
             self.client = QdrantClient(url=self.url, api_key=self.api_key)
-            self.collection_name = "wajah_karyawan"
+            self.collection_name = "absensi"
             self._init_collection()
             
         except Exception as e:
