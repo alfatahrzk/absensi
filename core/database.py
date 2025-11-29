@@ -1,31 +1,35 @@
-# core/database.py
 import streamlit as st
 from qdrant_client import QdrantClient
 from qdrant_client.models import VectorParams, Distance, PointStruct
 import uuid
+import requests # <--- Kita butuh ini untuk menembak API langsung
+import json
 
 class VectorDB:
     def __init__(self):
-        self.client = None # Inisialisasi awal None agar tidak AttributeError
+        self.client = None
+        self.api_key = None
+        self.url = None
         
         try:
-            # Cek apakah secrets ada
-            if "QDRANT_URL" not in st.secrets:
-                st.error("❌ QDRANT_URL belum disetting di Secrets Streamlit Cloud!")
+            # Ambil Credentials
+            if "QDRANT_URL" in st.secrets:
+                self.url = st.secrets["QDRANT_URL"]
+                self.api_key = st.secrets["QDRANT_API_KEY"]
+            else:
+                st.error("Secrets QDRANT belum disetting!")
                 return
 
-            self.client = QdrantClient(
-                url=st.secrets["QDRANT_URL"],
-                api_key=st.secrets["QDRANT_API_KEY"]
-            )
-            self.collection_name = "absensi"
+            # Tetap init client untuk fungsi save/create collection (karena biasanya yang error cuma search)
+            self.client = QdrantClient(url=self.url, api_key=self.api_key)
+            self.collection_name = "wajah_karyawan"
             self._init_collection()
             
         except Exception as e:
-            st.error(f"🔥 Gagal konek ke Qdrant: {e}")
+            st.error(f"Gagal init Qdrant: {e}")
 
     def _init_collection(self):
-        if self.client: # Cek client ada
+        if self.client:
             try:
                 self.client.get_collection(self.collection_name)
             except:
@@ -35,50 +39,74 @@ class VectorDB:
                 )
 
     def save_user(self, username, embedding):
-        if not self.client: return False # Cegah crash
+        if not self.client: return False
         
         point_id = str(uuid.uuid4())
-        self.client.upsert(
-            collection_name=self.collection_name,
-            points=[
-                PointStruct(
-                    id=point_id,
-                    vector=embedding.tolist(),
-                    payload={"username": username, "role": "user"}
-                )
-            ]
-        )
-        return True
+        try:
+            self.client.upsert(
+                collection_name=self.collection_name,
+                points=[
+                    PointStruct(
+                        id=point_id,
+                        vector=embedding.tolist(),
+                        payload={"username": username, "role": "user"}
+                    )
+                ]
+            )
+            return True
+        except Exception as e:
+            st.error(f"Gagal simpan user: {e}")
+            return False
 
     def search_user(self, embedding, threshold=0.5):
-        if self.client is None:
-            st.error("⚠️ Database Wajah Offline.")
-            return None, 0.0
+        """
+        Mencari user menggunakan REST API Langsung (Bypass Library Error)
+        """
+        if not self.url: return None, 0.0
+
+        # --- JURUS PAMUNGKAS: PAKE HTTP REQUEST ---
+        # Kita tidak pakai self.client.search() karena error di cloud
+        # Kita tembak langsung URL API Qdrant
         
-        # --- DIAGNOSTIK: CEK ISI PERUT QDRANT ---
-        # Kita akan melihat daftar method yang tersedia
-        available_methods = dir(self.client)
+        # Bersihkan URL (hapus port :6333 jika ada, karena requests biasanya auto handle atau butuh format bersih)
+        # Tapi biasanya format cloud qdrant: https://xyz...:6333
         
-        # Cek apakah ada kata 'search' di dalam daftar tersebut
-        has_search = 'search' in available_methods
+        # Endpoint Search Qdrant
+        api_endpoint = f"{self.url}/collections/{self.collection_name}/points/search"
         
-        if not has_search:
-            st.error("SOS! Method .search() HILANG dari QdrantClient!")
-            st.write("Daftar method yang tersedia (Cek apakah ada yang mirip):")
-            st.code(available_methods) # Tampilkan semua ke layar
-            st.stop()
-        # ----------------------------------------
+        headers = {
+            "api-key": self.api_key,
+            "Content-Type": "application/json"
+        }
+        
+        payload = {
+            "vector": embedding.tolist(),
+            "limit": 1,
+            "score_threshold": threshold,
+            "with_payload": True
+        }
 
         try:
-            results = self.client.search(
-                collection_name=self.collection_name,
-                query_vector=embedding.tolist(),
-                limit=1,
-                score_threshold=threshold
-            )
-            if results:
-                return results[0].payload['username'], results[0].score
+            # Kirim Request HTTP POST
+            response = requests.post(api_endpoint, headers=headers, data=json.dumps(payload), timeout=5)
+            
+            if response.status_code == 200:
+                result_json = response.json()
+                # Parsing hasil JSON dari Qdrant
+                # Struktur: {'result': [{'id': '...', 'score': 0.8, 'payload': {'username': '...'}}], ...}
+                points = result_json.get('result', [])
+                
+                if points:
+                    best_match = points[0]
+                    username = best_match['payload']['username']
+                    score = best_match['score']
+                    return username, score
+            else:
+                # Jika gagal, coba print errornya di log (bukan di layar user biar ga panik)
+                print(f"API Error: {response.text}")
+                
             return None, 0.0
+
         except Exception as e:
-            st.error(f"Error search: {e}")
+            st.error(f"Error Search via API: {e}")
             return None, 0.0
