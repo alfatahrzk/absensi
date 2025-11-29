@@ -3,12 +3,12 @@ streamlit
 pandas
 haversine
 opencv-python-headless
-st-gsheets-connection
-qdrant-client
-streamlit-js-eval
-geopy
+qdrant-client>=1.7.0
 gspread
 oauth2client
+geopy
+requests
+streamlit-js-eval
 --find-links https://download.pytorch.org/whl/torch_stable.html
 torch==2.0.1+cpu
 torchvision==0.15.2+cpu
