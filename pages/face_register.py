@@ -65,6 +65,8 @@ if current < total_steps:
     
     if img_file:
         bytes_data = img_file.getvalue()
+        raw_cv_img = cv2.imdecode(np.frombuffer(bytes_data, np.uint8), 1)
+
         cv_img = cv2.imdecode(np.frombuffer(bytes_data, np.uint8), 1)
         
         # 1. Proses Gambar Normal

@@ -6,20 +6,21 @@ from datetime import datetime
 import pandas as pd
 import time
 
-# Import Backend
-from core.engines import FaceEngine
+# --- PERBAIKAN 1: IMPORT YANG BENAR ---
+from core.engines import FaceEngine 
 from core.database import VectorDB
 from core.logger import AttendanceLogger
-from core.locator import LocationService # <--- IMPORT BARU
+from core.config_manager import ConfigManager
+from core.locator import LocationService 
 
 st.set_page_config(page_title="Absensi Karyawan", layout="centered")
 
 # --- INISIALISASI BACKEND ---
 @st.cache_resource
 def get_backends():
-    return FaceEngine(), VectorDB(), AttendanceLogger(), LocationService()
+    return FaceEngine(), VectorDB(), AttendanceLogger(), LocationService(), ConfigManager()
 
-engine, db, logger, locator = get_backends()
+engine, db, logger, locator, config_mgr = get_backends()
 
 # --- FUNGSI LOGIKA LOKASI ---
 def check_location(user_lat, user_lon, office_lat, office_lon, radius_km):
@@ -30,8 +31,12 @@ def check_location(user_lat, user_lon, office_lat, office_lon, radius_km):
 st.title("📸 Absensi Harian")
 
 # 1. DETEKSI LOKASI OTOMATIS
-OFFICE_COORD = (-7.3244,112.7974) # Koordinat Kantor (Surabaya)
-MAX_RADIUS_KM = 0.5
+office_conf = config_mgr.get_config()
+OFFICE_COORD = (office_conf['office_lat'], office_conf['office_lon'])
+MAX_RADIUS_KM = office_conf['radius_km']
+
+# Tampilkan Info Kantor (Opsional, bisa dihapus kalau mau bersih)
+# st.write(f"🏢 Kantor: {OFFICE_COORD} | Radius: {MAX_RADIUS_KM} km")
 
 st.subheader("📍 Deteksi Lokasi")
 
@@ -52,10 +57,13 @@ else:
         current_address = locator.get_address(user_lat, user_lon)
     
     # Tampilkan di UI
-    st.info(f"📍 Posisi anda saat ini di **{current_address}**") # Biar user tau dia terdeteksi di mana
+    st.info(f"📍 Posisi: **{current_address}**")
 
+    # --- MELENGKAPI TAMPILAN METRIC ---
     col1, col2, col3 = st.columns(3)
-    # ... metric latitude longitude sama ...
+    col1.metric("Latitude", f"{user_lat:.4f}")
+    col2.metric("Longitude", f"{user_lon:.4f}")
+    col3.metric("Sumber", source)
     
     if is_in_radius:
         st.success(f"✅ Lokasi Valid! Jarak: {distance:.3f} km")
@@ -75,7 +83,6 @@ if 'berhasil_absen' not in st.session_state:
 # --- LOGIKA UI: TAMPILKAN HASIL ATAU KAMERA ---
 
 if st.session_state['berhasil_absen'] is not None:
-    # ... (Bagian Struk Sukses SAMA PERSIS dengan sebelumnya) ...
     user_data = st.session_state['berhasil_absen']
     
     st.balloons() 
@@ -98,28 +105,39 @@ if st.session_state['berhasil_absen'] is not None:
 
 else:
     # 3. KAMERA INPUT
-    # ... (Bagian Kamera Input SAMA PERSIS dengan sebelumnya) ...
-    # (Copy dari kode sebelumnya, hanya pastikan variabel 'distance' diambil dari atas)
-    
     img_file = st.camera_input("Scan Wajah Anda", key="absen_cam")
 
     if img_file is not None:
         bytes_data = img_file.getvalue()
-        cv_img = cv2.imdecode(np.frombuffer(bytes_data, np.uint8), 1)
         
-        # Deteksi Koordinat Wajah (Fitur Kotak Hijau)
+        # --- PERBAIKAN 2: DECODE DAN MIRRORING ---
+        # Decode gambar mentah
+        raw_cv_img = cv2.imdecode(np.frombuffer(bytes_data, np.uint8), 1)
+        # Balik gambar (Mirroring) agar natural bagi user
+        cv_img = cv2.flip(raw_cv_img, 1)
+        # -----------------------------------------
+        
+        # Deteksi Wajah (Gunakan cv_img yang sudah dibalik)
         gray = cv2.cvtColor(cv_img, cv2.COLOR_BGR2GRAY)
+        
+        # Akses properti face_cascade dari engine
         faces = engine.face_cascade.detectMultiScale(gray, 1.1, 4)
         
         if len(faces) == 0:
             st.warning("⚠️ Wajah tidak terdeteksi.")
+            # Tampilkan gambar asli agar user tau kenapa gagal
+            st.image(cv_img, channels="BGR", caption="Wajah Gagal Terdeteksi")
         else:
             x, y, w, h = faces[0]
-            # Gambar Kotak
+            
+            # Gambar Kotak Hijau Visualisasi
             img_with_box = cv_img.copy()
             cv2.rectangle(img_with_box, (x, y), (x+w, y+h), (0, 255, 0), 3)
+            
+            # Tampilkan gambar yang sudah ada kotaknya
             st.image(img_with_box, channels="BGR", caption="Wajah Terdeteksi")
             
+            # Crop wajah untuk dikirim ke AI
             face_crop = cv_img[y:y+h, x:x+w]
             
             with st.spinner("Mencocokkan biometrik..."):
@@ -127,17 +145,18 @@ else:
                 found_user, score = db.search_user(input_emb, threshold=0.5)
                 
                 if found_user:
-                    status_absen = absen_type
-                    if logger.log_attendance(found_user, status_absen, distance, current_address):
+                    # Simpan Log ke Google Sheets
+                    # Pastikan urutan argumen sesuai dengan logger.py yang terakhir kita buat
+                    if logger.log_attendance(found_user, absen_type, distance, current_address):
                         
                         st.session_state['berhasil_absen'] = {
                             'nama': found_user,
                             'waktu': datetime.now().strftime('%H:%M:%S'),
                             'jarak': f"{distance:.3f}",
-                            'alamat': current_address # Simpan juga di session buat struk
+                            'alamat': current_address
                         }
                         st.rerun()
                     else:
                         st.error("Gagal terhubung ke Database Log.")
                 else:
-                    st.error("❌ Wajah tidak dikenali!")
+                    st.error("❌ Wajah tidak dikenali! Silakan coba lagi.")
