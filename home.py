@@ -1,5 +1,5 @@
 # Home.py
-import streamlit as stabil
+import streamlit as st
 
 st.set_page_config(
     page_title="Sistem Absensi AI",

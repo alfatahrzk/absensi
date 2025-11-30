@@ -4,6 +4,8 @@ pandas
 haversine
 opencv-python-headless
 qdrant-client
+st-gsheets-connection
+streamlit_gsheets
 gspread
 oauth2client
 geopy
