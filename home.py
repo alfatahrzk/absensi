@@ -46,18 +46,20 @@ with st.container():
         st.image("https://cdn-icons-png.flaticon.com/512/3652/3652191.png", width=150)
     with col2:
         st.markdown("""
-        ### Selamat Datang di AuraSense
-        Sistem ini menggunakan teknologi **Face Recognition berbasis AI (ResNet50)** 
-        dengan penyimpanan **Vector Database (Qdrant)**.
-        """)
+        <h3 style='color: #003366;'>Selamat Datang di AuraSense</h3>
+        <p style='color: #003366;'>Sistem ini menggunakan teknologi <strong>Face Recognition berbasis AI (ResNet50)</strong> 
+        dengan penyimpanan <strong>Vector Database (Qdrant)</strong>.</p>
+        """, unsafe_allow_html=True)
     
-    st.markdown("---")
-    st.subheader("Menu Utama")
+    st.markdown("<hr style='border: 1px solid #003366;'/>", unsafe_allow_html=True)
+    st.markdown("<h3 style='color: #003366;'>Menu Utama</h3>", unsafe_allow_html=True)
     st.markdown("""
-    Silakan pilih menu di sidebar (sebelah kiri):
-    * **Registrasi Wajah:** (Khusus Admin) Untuk mendaftarkan karyawan baru dengan 8 pose.
-    * **Absensi User:** (Akan dibuat selanjutnya) Untuk melakukan presensi harian.
-    """)
+    <p style='color: #003366;'>Silakan pilih menu di sidebar (sebelah kiri):</p>
+    <ul style='color: #003366;'>
+        <li><strong>Registrasi Wajah:</strong> (Khusus Admin) Untuk mendaftarkan karyawan baru dengan 8 pose.</li>
+        <li><strong>Absensi User:</strong> (Akan dibuat selanjutnya) Untuk melakukan presensi harian.</li>
+    </ul>
+    """, unsafe_allow_html=True)
     
     st.markdown("</div>", unsafe_allow_html=True)
 
