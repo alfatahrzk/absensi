@@ -92,5 +92,7 @@ with st.container():
     </div>
     """, unsafe_allow_html=True)
 
+st.divider()
+
 # Info box at the bottom
 st.info("💡 Pastikan Anda memiliki akses internet stabil untuk terhubung ke Cloud Database.")
