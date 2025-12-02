@@ -123,20 +123,25 @@ if st.session_state['berhasil_absen'] is not None:
     user_data = st.session_state['berhasil_absen']
     
     with st.container():
-        st.markdown("""
+        # Ekstrak nilai dari user_data terlebih dahulu
+        nama = user_data.get('nama', '-')
+        waktu = user_data.get('waktu', '-')
+        alamat = user_data.get('alamat', '-')
+        
+        st.markdown(f"""
         <div style='background-color: #f0f8ff; padding: 20px; border-radius: 10px; border-left: 5px solid #28a745;'>
             <h3 style='color: #28a745; text-align: center; margin-top: 0;'>✅ Absensi Berhasil!</h3>
             <div style='background-color: white; padding: 15px; border-radius: 8px;'>
                 <h4 style='color: #003366; text-align: center; margin-top: 0;'>STRUK BUKTI KEHADIRAN</h4>
                 <hr style='border: 1px solid #003366; opacity: 0.3;'>
-                <p style='color: #003366;'><strong>Nama</strong>   : {user_data['nama']}</p>
-                <p style='color: #003366;'><strong>Waktu</strong>  : {user_data['waktu']}</p>
-                <p style='color: #003366;'><strong>Lokasi</strong> : {user_data.get('alamat', '-')}</p>
+                <p style='color: #003366;'><strong>Nama</strong>   : {nama}</p>
+                <p style='color: #003366;'><strong>Waktu</strong>  : {waktu}</p>
+                <p style='color: #003366;'><strong>Lokasi</strong> : {alamat}</p>
                 <hr style='border: 1px solid #003366; opacity: 0.3;'>
                 <p style='color: #003366; text-align: center; margin-bottom: 0;'>Data tersimpan di Cloud.</p>
             </div>
         </div>
-        """.format(user_data=user_data), unsafe_allow_html=True)
+        """, unsafe_allow_html=True)
     
     if st.button("🔄 Kembali ke Kamera", type="primary"):
         st.session_state['berhasil_absen'] = None 
