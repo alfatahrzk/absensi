@@ -103,6 +103,7 @@ else:
 # 2. PILIH TIPE ABSENSI
 with st.markdown('<div class="content">', unsafe_allow_html=True):
     st.markdown("<h3 style='color: #003366;'>Pilih Jenis Absensi</h3>", unsafe_allow_html=True)
+    st.markdown("<style>div[role='radiogroup'] > label {color: #000000 !important;}</style>", unsafe_allow_html=True)
     absen_type = st.radio("", ["Masuk", "Keluar"], horizontal=True, label_visibility="collapsed")
     st.markdown("</div>", unsafe_allow_html=True)
 
