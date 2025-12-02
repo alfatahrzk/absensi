@@ -129,14 +129,20 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 st.markdown("""
-<div style='background-color: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; text-align: center;'>
+<style>
+[data-testid="stVerticalBlock"] > div[style*="display: flex; flex-direction: column; gap: 1rem;"] {
+    background-color: #003366;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+}
+</style>
 """, unsafe_allow_html=True)
 
 col1, col2, col3 = st.columns([1, 2, 1])
 with col2:
     absen_type = st.radio("", ["Masuk", "Keluar"], horizontal=True, label_visibility="collapsed")
-
-st.markdown("</div>", unsafe_allow_html=True)
 
 if 'berhasil_absen' not in st.session_state:
     st.session_state['berhasil_absen'] = None
