@@ -32,14 +32,14 @@ st.markdown("""
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
         .navbar {
-            background-color: #ffffff;
+            background-color: #003366;
             padding: 10px 20px;
             border-radius: 10px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             margin-bottom: 20px;
         }
         .navbar a {
-            color: #003366 !important;
+            color: #ffffff !important;
             font-weight: 600;
         }
     </style>
