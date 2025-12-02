@@ -55,11 +55,6 @@ st.markdown("""
             box-shadow: 0 -2px 4px rgba(0,0,0,0.1);
         }
         /* Ensure all text elements have proper contrast */
-        .stTextInput > div > div > input,
-        .stTextInput > div > div > textarea,
-        .stSelectbox > div > div,
-        .stNumberInput > div > div > input,
-        .stButton > button,
         .stAlert,
         .stMarkdown,
         .stHeader,
@@ -76,10 +71,6 @@ st.markdown("""
         .stSidebar p,
         .stSidebar h1, .stSidebar h2, .stSidebar h3, .stSidebar h4, .stSidebar h5, .stSidebar h6,
         .stSidebar .stMarkdown {
-            color: #003366 !important;
-        }
-        /* Ensure all body text has proper color */
-        body, p, h1, h2, h3, h4, h5, h6, span, div {
             color: #003366 !important;
         }
         /* Override any white text inheritance */
