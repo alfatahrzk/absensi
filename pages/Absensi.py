@@ -121,8 +121,6 @@ else:
         st.error(f"❌ Di Luar Kantor! Jarak: {distance:.3f} km")
         st.stop()
 
-st.divider()
-
 # 2. PILIH TIPE ABSENSI
 st.markdown("<h3 style='color: #003366; margin-bottom: 10px;'>Pilih Jenis Absensi</h3>", unsafe_allow_html=True)
 col1, col2 = st.columns([1, 1])
