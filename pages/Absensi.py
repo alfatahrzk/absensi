@@ -142,23 +142,9 @@ else:
 
 # 2. PILIH TIPE ABSENSI
 st.markdown("""
-<div style='text-align: center; margin-bottom: 20px;'>
+<div style='text-align: left; margin-bottom: 20px;'>
     <h3 style='color: #003366; margin-bottom: 10px;'>Pilih Jenis Absensi</h3>
 </div>
-""", unsafe_allow_html=True)
-
-st.markdown("""
-<style>
-[data-testid="stElementContainer"] {
-    display: flex !important;
-    justify-content: center !important;
-    align-items: center !important;
-}
-[data-testid="stRadio"] {
-    display: flex !important;
-    justify-content: center !important;
-}
-</style>
 """, unsafe_allow_html=True)
 
 absen_type = st.radio("", ["Masuk", "Keluar"], horizontal=True, label_visibility="collapsed")
