@@ -137,10 +137,17 @@ st.markdown("""
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     margin-bottom: 20px;
 }
+[data-testid="stVerticalBlock"] > div[style*="display: flex; flex-direction: column; gap: 1rem;"] .stRadio > div {
+    justify-content: center;
+    display: flex;
+}
+[data-testid="stVerticalBlock"] > div[style*="display: flex; flex-direction: column; gap: 1rem;"] .stRadio label {
+    color: white !important;
+}
 </style>
 """, unsafe_allow_html=True)
 
-col1, col2, col3 = st.columns([1, 2, 1])
+col1, col2, col3 = st.columns([1.5, 2, 1.5])
 with col2:
     absen_type = st.radio("", ["Masuk", "Keluar"], horizontal=True, label_visibility="collapsed")
 
