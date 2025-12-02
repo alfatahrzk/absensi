@@ -84,6 +84,13 @@ st.markdown("""
             color: #ffffff !important;
             font-weight: 600;
         }
+        /* Hide empty streamlit_js_eval iframe */
+        .st-emotion-cache-8atqhb {
+            display: none !important;
+        }
+        [data-testid="stCustomComponentV1"] {
+            display: none !important;
+        }
     </style>
 """, unsafe_allow_html=True)
 
