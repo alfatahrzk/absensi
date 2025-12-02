@@ -23,7 +23,7 @@ class LocationService:
             if loc_data and 'coords' in loc_data:
                 lat = loc_data['coords']['latitude']
                 lon = loc_data['coords']['longitude']
-                source = "GPS (Akurasi Tinggi)"
+                source = "GPS"
                 return lat, lon, source
         except:
             pass # Lanjut ke fallback jika JS gagal
@@ -36,7 +36,7 @@ class LocationService:
                 data = response.json()
                 lat = data['lat']
                 lon = data['lon']
-                source = "IP Address (Estimasi)"
+                source = "IP Address"
                 return lat, lon, source
         except Exception as e:
             print(f"Gagal IP Location: {e}")
@@ -44,6 +44,7 @@ class LocationService:
         return None, None, None
 
     def get_address(self, lat, lon):
+
         """
         Mengubah Lat/Lon menjadi Alamat Lengkap (Reverse Geocoding)
         """

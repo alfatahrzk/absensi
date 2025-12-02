@@ -5,7 +5,7 @@ haversine
 opencv-python-headless
 qdrant-client>=1.9.0
 pydantic>=2.0
-gspread
+supabase
 oauth2client
 geopy
 requests

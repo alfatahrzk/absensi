@@ -2,11 +2,11 @@
 import streamlit as st
 
 st.set_page_config(
-    page_title="Sistem Absensi AI",
+    page_title="AuraSense",
     layout="centered",
 )
 
-st.title("🏢 Sistem Absensi Wajah Cerdas")
+st.title("🏢 AuraSense Presence")
 st.image("https://cdn-icons-png.flaticon.com/512/3652/3652191.png", width=150)
 
 st.markdown("""

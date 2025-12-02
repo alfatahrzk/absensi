@@ -1,57 +1,52 @@
-# core/config_manager.py
 import streamlit as st
-from streamlit_gsheets import GSheetsConnection
-import pandas as pd
+from supabase import create_client, Client
 
 class ConfigManager:
     def __init__(self):
-        # Inisialisasi koneksi (sama seperti logger)
         try:
-            self.conn = st.connection("gsheets", type=GSheetsConnection)
-            self.sheet_url = st.secrets["connections"]["gsheets"]["spreadsheet"]
+            url = st.secrets["supabase"]["URL"]
+            key = st.secrets["supabase"]["KEY"]
+            self.supabase: Client = create_client(url, key)
         except Exception as e:
             st.error(f"Error Config Init: {e}")
 
     def get_config(self):
-        """
-        Membaca Config dari Tab 'Config' di Google Sheets
-        """
+        """Ambil semua config dari tabel 'config'"""
         try:
-            # Baca Worksheet bernama 'Config'
-            # ttl=0 agar selalu ambil data terbaru (real-time)
-            df = self.conn.read(spreadsheet=self.sheet_url, worksheet="Config", ttl=0)
+            # Select * from config
+            response = self.supabase.table("config").select("*").execute()
+            data = response.data
             
-            # Konversi DataFrame ke Dictionary biar mudah dipakai
-            # Contoh hasil: {'office_lat': -7.25, 'radius_km': 0.5}
-            config_dict = dict(zip(df['Key'], df['Value']))
-            
+            # Convert List of Dicts ke Single Dict
+            config_dict = {item['key']: item['value'] for item in data}
             return config_dict
             
-        except Exception as e:
-            # Fallback jika gagal baca sheet
-            st.warning(f"Gagal baca config online, pakai default. Error: {e}")
+        except Exception:
             return {
                 "office_lat": -7.2575,
                 "office_lon": 112.7521,
-                "radius_km": 0.5
+                "radius_km": 0.5,
+                "face_threshold": 0.65,
+                "liveness_threshold": 60.0
             }
 
-    def save_config(self, lat, lon, radius):
-        """
-        Menyimpan Config baru ke Tab 'Config'
-        """
+    def save_config(self, lat, lon, radius, face_thresh, liveness_thresh):
+        """Update config satu per satu (Upsert)"""
         try:
-            # Siapkan DataFrame baru
-            new_data = pd.DataFrame([
-                {"Key": "office_lat", "Value": float(lat)},
-                {"Key": "office_lon", "Value": float(lon)},
-                {"Key": "radius_km", "Value": float(radius)}
-            ])
+            # --- PERBAIKAN DI SINI ---
+            # Pastikan semua key adalah "value" (huruf kecil), bukan "Value"
+            updates = [
+                {"key": "office_lat", "value": str(lat)},
+                {"key": "office_lon", "value": str(lon)},
+                {"key": "radius_km", "value": str(radius)},
+                {"key": "face_threshold", "value": str(face_thresh)}, 
+                {"key": "liveness_threshold", "value": str(liveness_thresh)}
+            ]
+            # -------------------------
             
-            # Update Worksheet 'Config'
-            self.conn.update(spreadsheet=self.sheet_url, worksheet="Config", data=new_data)
+            # Supabase upsert (Insert or Update)
+            self.supabase.table("config").upsert(updates).execute()
             return True
-            
         except Exception as e:
-            st.error(f"Gagal menyimpan config: {e}")
+            st.error(f"Gagal update config: {e}")
             return False

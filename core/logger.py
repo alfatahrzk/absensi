@@ -1,57 +1,59 @@
-# core/logger.py
 import streamlit as st
-import gspread
-from oauth2client.service_account import ServiceAccountCredentials
+from supabase import create_client, Client
 from datetime import datetime
+import pandas as pd
 
 class AttendanceLogger:
     def __init__(self):
-        # Setup Scope
-        self.scope = [
-            "https://spreadsheets.google.com/feeds",
-            "https://www.googleapis.com/auth/drive"
-        ]
-        # Load Credentials dari secrets.toml
         try:
-            # Kita ambil dictionary creds dari secrets
-            creds_dict = dict(st.secrets["connections"]["gsheets"])
-            
-            # Bersihkan key yang tidak perlu (karena format streamlit connections agak beda)
-            # Library gspread butuh format dict json murni
-            # Hapus key 'spreadsheet' karena itu bukan bagian dari creds JSON
-            if "spreadsheet" in creds_dict:
-                self.sheet_url = creds_dict.pop("spreadsheet")
-            
-            self.creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, self.scope)
-            self.client = gspread.authorize(self.creds)
-            
+            url = st.secrets["supabase"]["URL"]
+            key = st.secrets["supabase"]["KEY"]
+            self.supabase: Client = create_client(url, key)
         except Exception as e:
-            st.error(f"Gagal auth gspread: {e}")
+            st.error(f"Gagal konek Supabase: {e}")
 
-    def log_attendance(self, name, status, location_dist, address):
+    def log_attendance(self, name, status, location_dist, address, lat, lon, similarity, liveness, validation_status="Berhasil"):
+        """Mencatat log ke Supabase"""
+        try:
+            now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            data = {
+                "nama": name,
+                "status": status,
+                "waktu_absen": now_str,
+                "jarak": f"{location_dist:.4f}",
+                "alamat": address,
+                "verifikasi": "Wajah (Qdrant)",
+                "koordinat": f"{lat}, {lon}",
+                "skor_kemiripan": float(similarity),
+                "skor_liveness": float(liveness),
+                "status_validasi": validation_status 
+            }
+            self.supabase.table("logs").insert(data).execute()
+            return True
+        except Exception as e:
+            st.error(f"Gagal simpan log: {e}")
+            return False
+
+    # --- FITUR BARU: AMBIL LOG UNTUK ADMIN ---
+    def get_logs(self, limit=100):
         """
-        Mode Turbo: Langsung append row tanpa read all data
+        Mengambil 100 log terakhir, diurutkan dari yang terbaru.
         """
         try:
-            # Buka Spreadsheet
-            sheet = self.client.open_by_url(self.sheet_url).sheet1
+            # Select * from logs order by id desc limit 100
+            response = self.supabase.table("logs")\
+                .select("*")\
+                .order("id", desc=True)\
+                .limit(limit)\
+                .execute()
             
-            now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            data = response.data
             
-            # Data yang mau dimasukkan (List biasa, bukan DataFrame)
-            row_data = [
-                now,            # Kolom A: Waktu
-                name,           # Kolom B: Nama
-                status,         # Kolom C: Status
-                f"{location_dist:.4f}", # Kolom D: Jarak
-                "Wajah (Qdrant)",       # Kolom E: Verifikasi
-                address         # Kolom F: Alamat
-            ]
-            
-            # Perintah Sakti: Append Row (Hanya kirim data kecil ini ke server)
-            sheet.append_row(row_data)
-            return True
-            
+            if data:
+                return pd.DataFrame(data)
+            else:
+                return pd.DataFrame() # Return DF kosong jika tidak ada data
+                
         except Exception as e:
-            st.error(f"Gagal menyimpan log (Turbo): {e}")
-            return False
+            st.error(f"Gagal mengambil log: {e}")
+            return pd.DataFrame()
