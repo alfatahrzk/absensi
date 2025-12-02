@@ -8,6 +8,7 @@ import numpy as np
 import cv2
 import streamlit as st
 from facenet_pytorch import MTCNN
+from torch.quantization import quantize_dynamic
 
 class _IndonesianFaceModel(nn.Module):
     def __init__(self, num_classes=68):
@@ -35,6 +36,13 @@ class FaceEngine:
             self.model.load_state_dict(torch.load(model_path, map_location=self.device), strict=False)
             self.model.to(self.device)
             self.model.eval()
+
+            # --- OPTIMASI MEMORI: QUANTIZATION ---
+            if self.device.type == 'cpu':
+                self.model = quantize_dynamic(
+                    self.model, {nn.Linear, nn.Conv2d}, dtype=torch.qint8
+                )
+
         except Exception as e:
             print(f"Model Load Error: {e}")
 
@@ -48,25 +56,39 @@ class FaceEngine:
 
     def extract_face_coords(self, image_cv2):
         if image_cv2 is None: return None
-        height, width, _ = image_cv2.shape
-        img_rgb = cv2.cvtColor(image_cv2, cv2.COLOR_BGR2RGB)
+        
+        # --- OPTIMASI SPEED: RESIZE DULU ---
+        # Kita kecilkan gambar 50% untuk deteksi (biar ngebut)
+        # Tapi nanti koordinatnya kita kembalikan ke skala asli
+        scale_factor = 0.5
+        small_img = cv2.resize(image_cv2, (0, 0), fx=scale_factor, fy=scale_factor)
+        
+        height, width, _ = small_img.shape # Pakai dimensi gambar kecil
+        img_rgb = cv2.cvtColor(small_img, cv2.COLOR_BGR2RGB) # Convert yang kecil
         img_pil = Image.fromarray(img_rgb)
         
         try:
             boxes, probs = self.detector.detect(img_pil)
-            if boxes is None or len(boxes) == 0: return None
+            
+            if boxes is None or len(boxes) == 0:
+                return None
             
             best_idx = np.argmax(probs)
             box = boxes[best_idx]
             x1, y1, x2, y2 = [int(b) for b in box]
             
-            x = max(0, x1)
-            y = max(0, y1)
-            w = min(width - x, x2 - x1)
-            h = min(height - y, y2 - y1)
+            # --- KEMBALIKAN SKALA KOORDINAT (UPSCALING) ---
+            # Karena deteksinya di gambar 0.5x, koordinatnya harus dikali 2
+            real_x = int(max(0, x1) / scale_factor)
+            real_y = int(max(0, y1) / scale_factor)
+            real_w = int(min(width - max(0, x1), x2 - x1) / scale_factor)
+            real_h = int(min(height - max(0, y1), y2 - y1) / scale_factor)
             
-            if w < 20 or h < 20: return None
-            return (x, y, w, h)
+            # Validasi ukuran (di gambar asli)
+            if real_w < 40 or real_h < 40: return None
+                
+            return (real_x, real_y, real_w, real_h)
+            
         except Exception:
             return None
 
@@ -85,28 +107,22 @@ class FaceEngine:
         mean_emb = np.mean(stack, axis=0)
         return mean_emb / np.linalg.norm(mean_emb)
 
-    # --- FITUR BARU: ANTI SPOOFING (TEXTURE ANALYSIS) ---
+    # --- ANTI SPOOFING (TEXTURE ANALYSIS) ---
     def check_liveness(self, face_crop):
-        """
-        Menganalisis 'kekayaan tekstur' wajah menggunakan Laplacian Variance.
-        Wajah asli punya tekstur (pori-pori/kulit) -> Variance Tinggi.
-        Wajah di layar HP/Kertas cenderung blur/flat -> Variance Rendah.
-        
-        Returns: (Is_Real: bool, Score: float)
-        """
-        if face_crop is None or face_crop.size == 0:
-            return False, 0.0
+        if face_crop is None or face_crop.size == 0: return False, 0.0
             
-        # 1. Ubah ke Grayscale
+        # 1. Laplacian (Tekstur)
         gray = cv2.cvtColor(face_crop, cv2.COLOR_BGR2GRAY)
+        laplacian_var = cv2.Laplacian(gray, cv2.CV_64F).var()
         
-        # 2. Hitung Laplacian Variance (Kekayaan Tepi/Tekstur)
-        score = cv2.Laplacian(gray, cv2.CV_64F).var()
+        # 2. Fourier Transform (Deteksi Pola Layar) - OPTIONAL TAMBAHAN
+        # Ini mendeteksi frekuensi tinggi yang tidak wajar (moiré pattern)
+        f = np.fft.fft2(gray)
+        fshift = np.fft.fftshift(f)
+        magnitude_spectrum = 20 * np.log(np.abs(fshift))
+        mean_freq = np.mean(magnitude_spectrum)
         
-        # 3. Tentukan Threshold Liveness
-        # Score < 50 biasanya blur/layar HP
-        # Score > 80 biasanya wajah asli tajam
-        # Kita set threshold di angka 60 (bisa disesuaikan)
-        is_real = score > 60.0
+        final_score = laplacian_var
+        is_real = final_score > 60.0
         
-        return is_real, score
+        return is_real, final_score

@@ -8,46 +8,62 @@ from core.engines import FaceEngine
 from core.database import VectorDB
 from core.config_manager import ConfigManager 
 from core.logger import AttendanceLogger 
+from core.admin_auth import AdminAuth # <--- IMPORT BARU
 
 st.set_page_config(page_title="Dashboard Admin", layout="wide") 
-
-# --- LOGIN ADMIN ---
-if 'is_admin' not in st.session_state:
-    st.session_state['is_admin'] = False
-
-if not st.session_state['is_admin']:
-    col1, col2, col3 = st.columns([1,1,1])
-    with col2:
-        st.title("🔒 Admin Login")
-        pwd = st.text_input("Masukkan Password Admin", type="password")
-        if st.button("Login", use_container_width=True):
-            correct_pwd = st.secrets.get("ADMIN_PASSWORD", "admin123")
-            if pwd == correct_pwd: 
-                st.session_state['is_admin'] = True
-                st.rerun()
-            else:
-                st.error("Password Salah!")
-    st.stop() 
 
 # --- INISIALISASI ---
 @st.cache_resource
 def get_backends():
-    return FaceEngine(), VectorDB(), ConfigManager(), AttendanceLogger()
+    return FaceEngine(), VectorDB(), ConfigManager(), AttendanceLogger(), AdminAuth()
 
-engine, db, config_mgr, logger = get_backends()
+engine, db, config_mgr, logger, auth = get_backends()
+
+# --- LOGIN ADMIN (VERSI DATABASE) ---
+if 'is_admin' not in st.session_state:
+    st.session_state['is_admin'] = False
+if 'admin_name' not in st.session_state:
+    st.session_state['admin_name'] = ""
+
+if not st.session_state['is_admin']:
+    col1, col2, col3 = st.columns([1,1,1])
+    with col2:
+        st.title("🔒 Admin Login System")
+        
+        form_user = st.text_input("Username")
+        form_pass = st.text_input("Password", type="password")
+        
+        if st.button("Masuk", type="primary", use_container_width=True):
+            if auth.login(form_user, form_pass):
+                st.session_state['is_admin'] = True
+                st.session_state['admin_name'] = form_user
+                st.toast(f"Selamat datang, {form_user}!", icon="👋")
+                time.sleep(1)
+                st.rerun()
+            else:
+                st.error("Username atau Password salah!")
+    st.stop() 
+
+# --- SIDEBAR LOGOUT ---
+with st.sidebar:
+    st.write(f"Login sebagai: **{st.session_state['admin_name']}**")
+    if st.button("Logout"):
+        st.session_state['is_admin'] = False
+        st.rerun()
 
 st.title("⚙️ Dashboard Admin")
 
-# BUAT 4 TAB MENU (TAMBAHAN SATU TAB BARU)
-tab1, tab2, tab3, tab4 = st.tabs([
+# BUAT 5 TAB MENU (TAMBAHAN SATU TAB BARU)
+tab1, tab2, tab3, tab4, tab5 = st.tabs([
     "📝 Registrasi Wajah", 
     "🎛️ Pengaturan Sistem", 
     "📊 Riwayat Absensi",
-    "👥 Kelola Wajah"
+    "👥 Kelola Wajah",
+    "🔑 Kelola Akun Admin" # <--- TAB BARU
 ])
 
 # ====================================================
-# TAB 1: REGISTRASI WAJAH
+# TAB 1: REGISTRASI WAJAH (SAMA)
 # ====================================================
 with tab1:
     c_left, c_center, c_right = st.columns([1, 2, 1])
@@ -81,6 +97,9 @@ with tab1:
                     st.warning("⚠️ Wajah tidak terdeteksi.")
                 else:
                     x, y, w, h = coords
+                    img_box = cv_img.copy()
+                    cv2.rectangle(img_box, (x, y), (x+w, y+h), (0, 255, 0), 3)
+                    
                     face_crop = cv_img[y:y+h, x:x+w]
                     emb = engine.get_embedding(face_crop)
                     
@@ -116,7 +135,7 @@ with tab1:
                     st.rerun()
 
 # ====================================================
-# TAB 2: PENGATURAN SISTEM
+# TAB 2: PENGATURAN SISTEM (SAMA)
 # ====================================================
 with tab2:
     st.header("Konfigurasi Global")
@@ -146,7 +165,7 @@ with tab2:
                 st.error("Gagal update.")
 
 # ====================================================
-# TAB 3: RIWAYAT ABSENSI
+# TAB 3: RIWAYAT ABSENSI (SAMA)
 # ====================================================
 with tab3:
     st.header("📊 Data Log Absensi")
@@ -163,57 +182,103 @@ with tab3:
         st.info("Belum ada data.")
 
 # ====================================================
-# TAB 4: KELOLA WAJAH (TAMPILAN TABEL)
+# TAB 4: KELOLA WAJAH (SAMA)
 # ====================================================
 with tab4:
     st.header("👥 Database Wajah (Qdrant)")
     
-    # 1. Ambil Data dari Qdrant
     with st.spinner("Mengambil daftar karyawan..."):
         users_list = db.get_all_users()
     
     if not users_list:
         st.warning("Database Qdrant masih kosong.")
     else:
-        # --- PERBAIKAN TAMPILAN: UBAH LIST JADI TABEL ---
-        
-        # Buat DataFrame
         df_users = pd.DataFrame(users_list, columns=["Nama Karyawan Terdaftar"])
-        
-        # Tambahkan kolom Nomor (Index + 1)
         df_users.index = df_users.index + 1
-        df_users.index.name = "No"
         
         col_info, col_table = st.columns([1, 2])
-        
         with col_info:
             st.success(f"Total: {len(users_list)} Karyawan")
-            st.info("Daftar ini diambil langsung dari Vector Database Cloud (Qdrant).")
-            
         with col_table:
-            # Tampilkan Tabel
             st.dataframe(df_users, use_container_width=True)
 
         st.divider()
-        
-        # FITUR HAPUS USER (Tetap pakai Dropdown agar aman)
         st.subheader("🗑️ Hapus Data Karyawan")
-        st.caption("Peringatan: Data yang dihapus tidak bisa dikembalikan.")
         
         col_del1, col_del2 = st.columns([3, 1])
         with col_del1:
-            user_to_delete = st.selectbox("Pilih nama karyawan yang akan dihapus:", users_list)
-        
+            user_to_delete = st.selectbox("Pilih nama karyawan:", users_list)
         with col_del2:
-            st.write("") # Spacer agar tombol sejajar ke bawah
+            st.write("") 
             st.write("") 
             if st.button("Hapus Permanen", type="primary"):
                 if user_to_delete:
                     with st.spinner(f"Menghapus data {user_to_delete}..."):
-                        success = db.delete_user(user_to_delete)
-                        if success:
+                        if db.delete_user(user_to_delete):
                             st.toast(f"User {user_to_delete} berhasil dihapus!", icon="🗑️")
                             time.sleep(1)
-                            st.rerun() # Refresh halaman agar tabel update
+                            st.rerun() 
                         else:
                             st.error("Gagal menghapus user.")
+
+# ====================================================
+# TAB 5: KELOLA ADMIN (FITUR BARU)
+# ====================================================
+with tab5:
+    st.header("🔑 Manajemen Akun Admin")
+    
+    # Bagian 1: List Admin
+    st.subheader("Daftar Admin Terdaftar")
+    admins = auth.get_all_admins()
+    
+    if admins:
+        df_admin = pd.DataFrame(admins)
+        st.dataframe(df_admin, use_container_width=True, hide_index=True)
+    
+    st.divider()
+    
+    # Bagian 2: Tambah Admin Baru
+    col_add, col_rem = st.columns(2)
+    
+    with col_add:
+        st.subheader("➕ Tambah Admin Baru")
+        with st.form("add_admin_form"):
+            new_user = st.text_input("Username Baru")
+            new_pass = st.text_input("Password Baru", type="password")
+            submitted = st.form_submit_button("Tambah Admin")
+            
+            if submitted:
+                if new_user and new_pass:
+                    success, msg = auth.add_admin(new_user, new_pass)
+                    if success:
+                        st.success(f"Admin {new_user} berhasil ditambahkan!")
+                        time.sleep(1)
+                        st.rerun()
+                    else:
+                        st.error(msg)
+                else:
+                    st.warning("Isi username dan password.")
+    
+    # Bagian 3: Hapus Admin
+    with col_rem:
+        st.subheader("⛔ Hapus Admin")
+        
+        # Ambil list username saja
+        admin_usernames = [a['username'] for a in admins] if admins else []
+        
+        # Jangan izinkan hapus diri sendiri (cegah bunuh diri akun)
+        current_user = st.session_state.get('admin_name', '')
+        valid_to_delete = [u for u in admin_usernames if u != current_user]
+        
+        if valid_to_delete:
+            del_target = st.selectbox("Pilih Admin untuk dihapus:", valid_to_delete)
+            
+            if st.button("Hapus Admin Terpilih", type="primary"):
+                if auth.delete_admin(del_target):
+                    st.success(f"Admin {del_target} dihapus.")
+                    time.sleep(1)
+                    st.rerun()
+                else:
+                    st.error("Gagal menghapus.")
+        else:
+            st.info("Tidak ada admin lain yang bisa dihapus (Anda tidak bisa menghapus diri sendiri).")
