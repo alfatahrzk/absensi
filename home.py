@@ -57,29 +57,29 @@ with nav_col2:
 
 # Main Content
 with st.container():
-    st.markdown('<div class="content">', unsafe_allow_html=True)
-    
     col1, col2 = st.columns([1, 2])
     with col1:
         st.image("https://cdn-icons-png.flaticon.com/512/3652/3652191.png", width=150)
     with col2:
         st.markdown("""
-        <h3 style='color: #003366;'>Selamat Datang di AuraSense</h3>
-        <p style='color: #003366;'>Sistem ini menggunakan teknologi <strong>Face Recognition berbasis AI (ResNet50)</strong> 
-        dengan penyimpanan <strong>Vector Database (Qdrant)</strong>.</p>
+        <div class='content'>
+            <h3 style='color: #003366; margin-top: 0;'>Selamat Datang di AuraSense</h3>
+            <p style='color: #003366;'>Sistem ini menggunakan teknologi <strong>Face Recognition berbasis AI (ResNet50)</strong> 
+            with penyimpanan <strong>Vector Database (Qdrant)</strong>.</p>
+        </div>
         """, unsafe_allow_html=True)
-    
-    st.markdown("<hr style='border: 1px solid #003366;'/>", unsafe_allow_html=True)
-    st.markdown("<h3 style='color: #003366;'>Menu Utama</h3>", unsafe_allow_html=True)
+
     st.markdown("""
-    <p style='color: #003366;'>Silakan pilih menu di sidebar (sebelah kiri):</p>
-    <ul style='color: #003366;'>
-        <li><strong>Registrasi Wajah:</strong> (Khusus Admin) Untuk mendaftarkan karyawan baru dengan 8 pose.</li>
-        <li><strong>Absensi User:</strong> (Akan dibuat selanjutnya) Untuk melakukan presensi harian.</li>
-    </ul>
+    <div class='content' style='margin-top: 20px;'>
+        <hr style='border: 1px solid #003366;'>
+        <h3 style='color: #003366;'>Menu Utama</h3>
+        <p style='color: #003366;'>Silakan pilih menu di sidebar (sebelah kiri):</p>
+        <ul style='color: #003366;'>
+            <li><strong>Registrasi Wajah:</strong> (Khusus Admin) Untuk mendaftarkan karyawan baru dengan 8 pose.</li>
+            <li><strong>Absensi User:</strong> (Akan dibuat selanjutnya) Untuk melakukan presensi harian.</li>
+        </ul>
+    </div>
     """, unsafe_allow_html=True)
-    
-    st.markdown("</div>", unsafe_allow_html=True)
 
 # Info box at the bottom
 st.info("💡 Pastikan Anda memiliki akses internet stabil untuk terhubung ke Cloud Database.")
