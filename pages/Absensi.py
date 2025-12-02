@@ -13,7 +13,55 @@ from core.logger import AttendanceLogger
 from core.config_manager import ConfigManager
 from core.locator import LocationService 
 
-st.set_page_config(page_title="Absensi Karyawan", layout="centered")
+st.set_page_config(
+    page_title="Absensi Karyawan",
+    layout="centered",
+    page_icon="📸"
+)
+
+# Custom CSS for styling
+st.markdown("""
+    <style>
+        .main {
+            background-color: #e6f2ff;
+        }
+        .stApp {
+            background-color: #e6f2ff;
+        }
+        .header {
+            background-color: #003366;
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .content-box {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        /* Style for radio buttons */
+        .stRadio > div {
+            background-color: white;
+            padding: 10px;
+            border-radius: 10px;
+        }
+        .stRadio > div > label {
+            color: #000000 !important;
+            font-weight: 500;
+        }
+        /* Style for success message */
+        .stAlert {
+            border-radius: 10px;
+        }
+    </style>
+""", unsafe_allow_html=True)
+
+# Header Section
+st.markdown('<div class="header"><h1 style="color: white; margin: 0;">📸 Absensi Harian</h1></div>', unsafe_allow_html=True)
 
 # --- INISIALISASI BACKEND ---
 @st.cache_resource
@@ -37,7 +85,7 @@ def check_location(user_lat, user_lon, office_lat, office_lon, radius_km):
     return distance, distance <= radius_km
 
 # --- HALAMAN UTAMA ---
-st.title("📸 Absensi Harian")
+# Title is now in the header
 
 with st.spinner("Mencari lokasi Anda..."):
     user_lat, user_lon, source = locator.get_coordinates()
@@ -61,7 +109,10 @@ else:
 st.divider()
 
 # 2. PILIH TIPE ABSENSI
-absen_type = st.radio("Jenis Absensi:", ["Masuk", "Keluar"], horizontal=True)
+st.markdown("<h3 style='color: #003366; margin-bottom: 10px;'>Pilih Jenis Absensi</h3>", unsafe_allow_html=True)
+col1, col2 = st.columns([1, 1])
+with col1:
+    absen_type = st.radio("", ["Masuk", "Keluar"], horizontal=True, label_visibility="collapsed")
 
 if 'berhasil_absen' not in st.session_state:
     st.session_state['berhasil_absen'] = None
@@ -71,24 +122,30 @@ if 'berhasil_absen' not in st.session_state:
 if st.session_state['berhasil_absen'] is not None:
     user_data = st.session_state['berhasil_absen']
     
-    st.success(f"✅ Absensi Berhasil!")
-    
-    st.info(f"""
-    **STRUK BUKTI KEHADIRAN**\n
-    ------------------------\n
-    Nama   : {user_data['nama']} \n
-    Waktu  : {user_data['waktu']}\n
-    Lokasi : {user_data.get('alamat', '-')}\n
-    ------------------------\n
-    Data tersimpan di Cloud.
-    """)
+    with st.container():
+        st.markdown("""
+        <div style='background-color: #f0f8ff; padding: 20px; border-radius: 10px; border-left: 5px solid #28a745;'>
+            <h3 style='color: #28a745; text-align: center; margin-top: 0;'>✅ Absensi Berhasil!</h3>
+            <div style='background-color: white; padding: 15px; border-radius: 8px;'>
+                <h4 style='color: #003366; text-align: center; margin-top: 0;'>STRUK BUKTI KEHADIRAN</h4>
+                <hr style='border: 1px solid #003366; opacity: 0.3;'>
+                <p style='color: #003366;'><strong>Nama</strong>   : {user_data['nama']}</p>
+                <p style='color: #003366;'><strong>Waktu</strong>  : {user_data['waktu']}</p>
+                <p style='color: #003366;'><strong>Lokasi</strong> : {user_data.get('alamat', '-')}</p>
+                <hr style='border: 1px solid #003366; opacity: 0.3;'>
+                <p style='color: #003366; text-align: center; margin-bottom: 0;'>Data tersimpan di Cloud.</p>
+            </div>
+        </div>
+        """.format(user_data=user_data), unsafe_allow_html=True)
     
     if st.button("🔄 Kembali ke Kamera", type="primary"):
         st.session_state['berhasil_absen'] = None 
         st.rerun()
 
 else:
-    img_file = st.camera_input("Scan Wajah Anda", key="absen_cam")
+    with st.container():
+        st.markdown("<h3 style='color: #003366; text-align: center;'>Scan Wajah Anda</h3>", unsafe_allow_html=True)
+        img_file = st.camera_input("", key="absen_cam")
 
     if img_file is not None:
         bytes_data = img_file.getvalue()
