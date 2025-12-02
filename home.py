@@ -71,7 +71,6 @@ with st.container():
 
     st.markdown("""
     <div class='content' style='margin-top: 20px;'>
-        <hr style='border: 1px solid #003366;'>
         <h3 style='color: #003366;'>Menu Utama</h3>
         <p style='color: #003366;'>Silakan pilih menu di sidebar (sebelah kiri):</p>
         <ul style='color: #003366;'>
