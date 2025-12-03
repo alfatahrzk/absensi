@@ -101,58 +101,56 @@ class FaceEngine:
         mean_emb = np.mean(stack, axis=0)
         return mean_emb / np.linalg.norm(mean_emb)
 
-    # --- FITUR BARU: ANTI SPOOFING V3 (MULTI-LAYER CHECK) ---
+    # --- FITUR BARU: ANTI SPOOFING V4 (MULTI-LAYER CHECK) ---
     def check_liveness(self, face_crop):
-        """
-        Kombinasi: Tekstur + Frekuensi + Warna + Cahaya
-        """
-        if face_crop is None or face_crop.size == 0:
-            return False, 0.0
+        if face_crop is None or face_crop.size == 0: return False, 0.0
             
         # 1. Analisis Tekstur (Laplacian)
         gray = cv2.cvtColor(face_crop, cv2.COLOR_BGR2GRAY)
         laplacian_score = cv2.Laplacian(gray, cv2.CV_64F).var()
         
-        # 2. Analisis Frekuensi (Fourier - Moiré Pattern)
+        # 2. Analisis Warna Kulit (YCrCb)
+        # Mengubah ke ruang warna YCrCb untuk memisahkan Luma (Y) dan Chroma (Cr, Cb)
+        ycrcb = cv2.cvtColor(face_crop, cv2.COLOR_BGR2YCrCb)
+        y, cr, cb = cv2.split(ycrcb)
+        
+        # Rata-rata nilai warna
+        mean_cr = np.mean(cr)
+        mean_cb = np.mean(cb)
+        
+        # Rentang Warna Kulit Normal (Empiris)
+        # Cr biasanya 133-173, Cb biasanya 77-127 untuk kulit manusia asli
+        skin_score = 100
+        if not (133 <= mean_cr <= 173) or not (77 <= mean_cb <= 127):
+            # Jika warna kulit aneh (terlalu biru layar atau terlalu pucat)
+            skin_score = 0 
+        
+        # 3. Analisis Frekuensi (Fourier)
         f = np.fft.fft2(gray)
         fshift = np.fft.fftshift(f)
         magnitude_spectrum = 20 * np.log(np.abs(fshift) + 1e-5)
         fourier_score = np.mean(magnitude_spectrum)
         
-        # 3. Analisis Cahaya & Warna (HSV)
-        hsv = cv2.cvtColor(face_crop, cv2.COLOR_BGR2HSV)
-        h, s, v = cv2.split(hsv)
-        
-        # Cek Glare (Silau Layar): Hitung piksel yang terlalu terang (V > 250)
-        # Layar HP/Laptop sering over-exposed putihnya
-        bright_pixels = np.sum(v > 250)
-        total_pixels = v.size
-        glare_ratio = bright_pixels / total_pixels
-        
-        # Cek Saturasi (Warna Pucat): Layar seringkali warnanya 'washed out'
-        mean_saturation = np.mean(s)
-        
-        # --- PERHITUNGAN SKOR FINAL DENGAN PENALTI ---
+        # --- PERHITUNGAN SKOR AKHIR ---
         final_score = laplacian_score
         
-        # PENALTI 1: Jika pola frekuensi tinggi (ciri khas pixel grid layar)
-        if fourier_score > 155: 
-            final_score -= 30 # Diskon 30 poin
+        # PENALTI 1: TERLALU TAJAM (Ciri Layar HD)
+        # Kulit asli itu soft. Kalau skor > 800, itu mencurigakan (digital sharpening).
+        if laplacian_score > 800:
+            final_score = final_score * 0.5 # Pangkas skor 50%
             
-        # PENALTI 2: Jika terlalu silau (ciri khas backlight layar)
-        # Jika lebih dari 5% wajah silau total
-        if glare_ratio > 0.05: 
-            final_score -= 40 # Diskon 40 poin
+        # PENALTI 2: MOIRE PATTERN (Grid Layar)
+        if fourier_score > 150:
+            final_score -= 40
             
-        # PENALTI 3: Jika warna terlalu pucat (bukan kulit sehat)
-        if mean_saturation < 30:
-            final_score -= 20 # Diskon 20 poin
-
-        # Pastikan skor tidak minus
+        # PENALTI 3: WARNA KULIT PALSU
+        if skin_score == 0:
+            final_score -= 50 # Hukuman berat jika warna kulit salah
+            
+        # Normalisasi agar tidak negatif
         final_score = max(0.0, final_score)
         
-        # Kembalikan skor akhir
-        # Logic Lulus/Gagal tetap ditentukan oleh Slider di Halaman Absensi
-        is_real = final_score > 40 
+        # Ambang batas kelulusan
+        is_real = final_score > 50
         
         return is_real, final_score
