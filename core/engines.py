@@ -136,7 +136,7 @@ class FaceEngine:
         
         # PENALTI 1: TERLALU TAJAM (Ciri Layar HD)
         # Kulit asli itu soft. Kalau skor > 800, itu mencurigakan (digital sharpening).
-        if laplacian_score > 800:
+        if laplacian_score > 300:
             final_score = final_score * 0.5 # Pangkas skor 50%
             
         # PENALTI 2: MOIRE PATTERN (Grid Layar)
