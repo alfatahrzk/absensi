@@ -66,6 +66,9 @@ st.markdown("""
         .stTextInput > div > label {
             color: #003366 !important;
         }
+        .stButton > button {
+            color: white !important;
+        }
     </style>
 """, unsafe_allow_html=True)
 
@@ -206,7 +209,7 @@ with tab2:
     with st.form("edit_config"):
         col1, col2 = st.columns(2)
         with col1:
-            st.markdown('<p class="dark-blue-text">📍 Lokasi Kantor</p>', unsafe_allow_html=True)
+            st.subheader("📍 Lokasi Kantor")
             st.markdown('<p class="dark-blue-text">Latitude</p>', unsafe_allow_html=True)
             lat = st.number_input("", value=float(current_conf.get('office_lat', -7.25)), format="%.6f", label_visibility="collapsed")
             st.markdown('<p class="dark-blue-text">Longitude</p>', unsafe_allow_html=True)
@@ -220,7 +223,7 @@ with tab2:
             st.markdown('<p class="dark-blue-text">Threshold Liveness</p>', unsafe_allow_html=True)
             liveness_thresh = st.slider("", 0.0, 200.0, float(current_conf.get('liveness_threshold', 60.0)), 10.0, label_visibility="collapsed")
         
-        if st.form_submit_button("Simpan Konfigurasi", use_container_width=True):
+        if st.form_submit_button("Simpan Konfigurasi", use_container_width=True, unsafe_allow_html=True):
             if config_mgr.save_config(lat, lon, rad, face_thresh, liveness_thresh):
                 load_config.clear()
                 st.success("✅ Tersimpan!")
