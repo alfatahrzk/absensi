@@ -215,8 +215,10 @@ with tab2:
             rad = st.number_input("", value=float(current_conf.get('radius_km', 0.5)), step=0.1, label_visibility="collapsed")
         with col2:
             st.subheader("🧠 Sensitivitas AI")
-            face_thresh = st.slider('<p class="dark-blue-text">Threshold Wajah</p>', 0.0, 1.0, float(current_conf.get('face_threshold', 0.70)), 0.01)
-            liveness_thresh = st.slider('<p class="dark-blue-text">Threshold Liveness</p>', 0.0, 200.0, float(current_conf.get('liveness_threshold', 60.0)), 10.0)
+            st.markdown('<p class="dark-blue-text">Threshold Wajah</p>', unsafe_allow_html=True)
+            face_thresh = st.slider("", 0.0, 1.0, float(current_conf.get('face_threshold', 0.70)), 0.01, label_visibility="collapsed")
+            st.markdown('<p class="dark-blue-text">Threshold Liveness</p>', unsafe_allow_html=True)
+            liveness_thresh = st.slider("", 0.0, 200.0, float(current_conf.get('liveness_threshold', 60.0)), 10.0, label_visibility="collapsed")
         
         if st.form_submit_button("Simpan Konfigurasi", use_container_width=True):
             if config_mgr.save_config(lat, lon, rad, face_thresh, liveness_thresh):
@@ -270,7 +272,8 @@ with tab4:
         
         col_del1, col_del2 = st.columns([3, 1])
         with col_del1:
-            user_to_delete = st.selectbox('<p class="dark-blue-text">Pilih nama karyawan:</p>', users_list)
+            st.markdown('<p class="dark-blue-text">Pilih nama karyawan:</p>', unsafe_allow_html=True)
+            user_to_delete = st.selectbox("", users_list, label_visibility="collapsed")
         with col_del2:
             st.write("") 
             st.write("") 
@@ -306,8 +309,10 @@ with tab5:
     with col_add:
         st.subheader("➕ Tambah Admin Baru")
         with st.form("add_admin_form"):
-            new_user = st.text_input('<p class="dark-blue-text">Username Baru</p>')
-            new_pass = st.text_input('<p class="dark-blue-text">Password Baru</p>', type="password")
+            st.markdown('<p class="dark-blue-text">Username Baru</p>', unsafe_allow_html=True)
+            new_user = st.text_input("", label_visibility="collapsed")
+            st.markdown('<p class="dark-blue-text">Password Baru</p>', unsafe_allow_html=True)
+            new_pass = st.text_input("", type="password", label_visibility="collapsed")
             submitted = st.form_submit_button("Tambah Admin")
             
             if submitted:
@@ -334,7 +339,8 @@ with tab5:
         valid_to_delete = [u for u in admin_usernames if u != current_user]
         
         if valid_to_delete:
-            del_target = st.selectbox('<p class="dark-blue-text">Pilih Admin untuk dihapus:</p>', valid_to_delete)
+            st.markdown('<p class="dark-blue-text">Pilih Admin untuk dihapus:</p>', unsafe_allow_html=True)
+            del_target = st.selectbox("", valid_to_delete, label_visibility="collapsed")
             
             if st.button("Hapus Admin Terpilih", type="primary"):
                 if auth.delete_admin(del_target):
