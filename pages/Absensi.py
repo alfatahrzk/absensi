@@ -2,7 +2,7 @@ import streamlit as st
 import cv2
 import numpy as np
 from haversine import haversine, Unit
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 import pandas as pd
 import time
 
@@ -19,7 +19,7 @@ st.set_page_config(
     page_icon="📸"
 )
 
-# Custom CSS (SAMA SEPERTI SEBELUMNYA)
+# Custom CSS
 st.markdown("""
     <style>
         .main { background-color: #e6f2ff; }
@@ -33,10 +33,10 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# Header Section
+# Header
 st.markdown('<div class="header"><h1 style="color: white; margin: 0;">📸 Absensi Harian</h1></div>', unsafe_allow_html=True)
 
-# Navigation links
+# Navigation
 nav_col1, nav_col2 = st.columns([1, 1])
 with nav_col1:
     st.page_link("home.py", label="🏠 Home")
@@ -104,13 +104,11 @@ if st.session_state['berhasil_absen'] is not None:
         </div>
         """, unsafe_allow_html=True)
 
-        # Foto Bukti
         if 'foto_bukti' in user_data:
             col_img1, col_img2, col_img3 = st.columns([1, 2, 1])
             with col_img2:
                 st.image(user_data['foto_bukti'], channels="BGR", caption="Visualisasi AI", use_container_width=True)
 
-        # Struk
         nama = user_data.get('nama', '-')
         waktu = user_data.get('waktu', '-')
         alamat = user_data.get('alamat', '-')
@@ -151,9 +149,6 @@ else:
             x, y, w, h = coords 
             face_crop = cv_img[y:y+h, x:x+w]
 
-            # --- LIVENESS DIHAPUS ---
-            # Langsung Verifikasi Wajah Saja
-            
             with st.spinner("Mencocokkan biometrik..."):
                 input_emb = engine.get_embedding(face_crop)
                 found_user, score = db.search_user(input_emb, threshold=0.0)
@@ -170,7 +165,16 @@ else:
                     cv2.putText(img_result, label_text, (x, y - 10), 
                                cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 255), 2)
 
-                    # Simpan Log (Liveness score dikirim 0 atau 100 dummy)
+                    # --- FITUR ADAPTIF (SELF LEARNING) ---
+                    # Update database hanya jika skor sangat meyakinkan
+                    ADAPTIVE_THRESHOLD = THRESHOLD_VAL + 0.08 
+                    
+                    if score >= ADAPTIVE_THRESHOLD:
+                        db.update_user_embedding(found_user, input_emb)
+                        st.toast(f"Data wajah {found_user} diperbarui otomatis! 🧠", icon="✨")
+                    # -------------------------------------
+
+                    # Simpan Log
                     sukses = logger.log_attendance(
                         name=found_user, 
                         status=absen_type, 
@@ -179,7 +183,7 @@ else:
                         lat=user_lat,
                         lon=user_lon,
                         similarity=score,
-                        liveness=100.0, # Dummy Score
+                        liveness=100.0, # Dummy karena liveness dimatikan
                         validation_status="Berhasil"
                     )
                     
@@ -187,7 +191,7 @@ else:
                         st.session_state['berhasil_absen'] = {
                             'nama': found_user,
                             'skor': f"{score:.4f}",
-                            'waktu': (datetime.now() + pd.Timedelta(hours=7)).strftime('%H:%M:%S'), 
+                            'waktu': (datetime.now() + timedelta(hours=7)).strftime('%H:%M:%S'), 
                             'jarak': f"{distance:.3f}",
                             'alamat': current_address,
                             'foto_bukti': img_result
@@ -196,7 +200,7 @@ else:
                     else:
                         st.error("Gagal terhubung ke Database Log.")
                 else:
-                    # Gagal: Skor Rendah
+                    # Gagal
                     st.error(f"❌ Ditolak! Wajah tidak dikenali.\nHarap hubungi admin!")
                     logger.log_attendance(
                         name=f"{found_user} (Ditolak)",
@@ -206,6 +210,6 @@ else:
                         lat=user_lat,
                         lon=user_lon,
                         similarity=score,
-                        liveness=0.0, # Dummy Score
+                        liveness=0.0,
                         validation_status="Gagal: Skor Rendah"
                     )

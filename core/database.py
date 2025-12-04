@@ -5,6 +5,7 @@ from qdrant_client.models import VectorParams, Distance, PointStruct, PayloadSch
 import uuid
 import requests 
 import json
+import numpy as np
 
 class VectorDB:
     def __init__(self):
@@ -150,4 +151,63 @@ class VectorDB:
                 
         except Exception as e:
             st.error(f"❌ Error Koneksi Delete: {e}")
+            return False
+
+    def update_user_embedding(self, username, new_vector):
+        """
+        Mengupdate vektor wajah user dengan metode Moving Average.
+        Rumus: (VektorLama * 0.9) + (VektorBaru * 0.1)
+        """
+        if not self.url: return False
+        
+        # 1. Cari Point ID dan Vektor Lama berdasarkan Username
+        api_scroll = f"{self.url}/collections/{self.collection_name}/points/scroll"
+        headers = {"api-key": self.api_key, "Content-Type": "application/json"}
+        
+        payload_search = {
+            "filter": {
+                "must": [{"key": "username", "match": {"value": username}}]
+            },
+            "limit": 1,
+            "with_vector": True # Kita butuh vektor lamanya
+        }
+        
+        try:
+            # Ambil data lama
+            resp = requests.post(api_scroll, headers=headers, data=json.dumps(payload_search), timeout=5)
+            if resp.status_code != 200: return False
+            
+            points = resp.json().get('result', {}).get('points', [])
+            if not points: return False
+            
+            # Data lama ditemukan
+            old_point = points[0]
+            point_id = old_point['id']
+            old_vector = np.array(old_point['vector'])
+            new_input_vector = np.array(new_vector)
+            
+            # 2. Hitung Rata-rata Berbobot (Weighted Average)
+            # Kita beri bobot 90% ke data lama (agar stabil) dan 10% ke data baru (agar adaptif)
+            # Anda bisa ubah rasionya, misal 0.8 dan 0.2
+            updated_vector = (old_vector * 0.90) + (new_input_vector * 0.10)
+            
+            # Normalisasi ulang (Wajib untuk Cosine Similarity)
+            updated_vector = updated_vector / np.linalg.norm(updated_vector)
+            
+            # 3. Update ke Qdrant (Upsert dengan ID yang sama = Overwrite)
+            self.client.upsert(
+                collection_name=self.collection_name,
+                points=[
+                    PointStruct(
+                        id=point_id, # Pakai ID lama biar menimpa
+                        vector=updated_vector.tolist(),
+                        payload=old_point['payload'] # Pakai payload lama
+                    )
+                ]
+            )
+            return True
+            
+        except Exception as e:
+            # Silent error (jangan ganggu user kalau update gagal, karena ini cuma fitur tambahan)
+            print(f"Gagal update adaptif: {e}")
             return False
