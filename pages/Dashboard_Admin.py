@@ -240,7 +240,7 @@ with tab2:
             face_thresh = st.slider("", 0.0, 1.0, float(current_conf.get('face_threshold', 0.70)), 0.01, label_visibility="collapsed")
 
         if st.form_submit_button("Simpan Konfigurasi", use_container_width=True):
-            if config_mgr.save_config(lat, lon, rad, face_thresh):
+            if config_mgr.save_config(lat, lon, rad, face_thresh, 0.0): 
                 load_config.clear()
                 st.success("✅ Tersimpan!")
                 time.sleep(1)
