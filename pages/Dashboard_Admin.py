@@ -127,7 +127,8 @@ with tab1:
     c_left, c_center, c_right = st.columns([1, 2, 1])
     with c_center:
         st.header("Pendaftaran Karyawan")
-        username = st.text_input("Nama Karyawan Baru")
+        st.markdown('<p class="dark-blue-text">Nama Karyawan Baru</p>', unsafe_allow_html=True)
+        username = st.text_input("", label_visibility="collapsed")
 
         if 'reg_data' not in st.session_state: st.session_state['reg_data'] = [] 
         if 'step' not in st.session_state: st.session_state['step'] = 0
@@ -143,7 +144,8 @@ with tab1:
 
         if current < total_steps:
             st.info(f"**Langkah {current + 1}/{total_steps}:** {instructions[current]}")
-            img_file = st.camera_input("Ambil Foto", key=f"cam_{current}")
+            st.markdown('<p class="dark-blue-text">Ambil Foto</p>', unsafe_allow_html=True)
+            img_file = st.camera_input("", key=f"cam_{current}", label_visibility="collapsed")
             
             if img_file:
                 bytes_data = img_file.getvalue()
@@ -213,8 +215,8 @@ with tab2:
             rad = st.number_input("", value=float(current_conf.get('radius_km', 0.5)), step=0.1, label_visibility="collapsed")
         with col2:
             st.subheader("🧠 Sensitivitas AI")
-            face_thresh = st.slider("Threshold Wajah", 0.0, 1.0, float(current_conf.get('face_threshold', 0.70)), 0.01)
-            liveness_thresh = st.slider("Threshold Liveness", 0.0, 200.0, float(current_conf.get('liveness_threshold', 60.0)), 10.0)
+            face_thresh = st.slider('<p class="dark-blue-text">Threshold Wajah</p>', 0.0, 1.0, float(current_conf.get('face_threshold', 0.70)), 0.01)
+            liveness_thresh = st.slider('<p class="dark-blue-text">Threshold Liveness</p>', 0.0, 200.0, float(current_conf.get('liveness_threshold', 60.0)), 10.0)
         
         if st.form_submit_button("Simpan Konfigurasi", use_container_width=True):
             if config_mgr.save_config(lat, lon, rad, face_thresh, liveness_thresh):
@@ -268,7 +270,7 @@ with tab4:
         
         col_del1, col_del2 = st.columns([3, 1])
         with col_del1:
-            user_to_delete = st.selectbox("Pilih nama karyawan:", users_list)
+            user_to_delete = st.selectbox('<p class="dark-blue-text">Pilih nama karyawan:</p>', users_list)
         with col_del2:
             st.write("") 
             st.write("") 
@@ -304,8 +306,8 @@ with tab5:
     with col_add:
         st.subheader("➕ Tambah Admin Baru")
         with st.form("add_admin_form"):
-            new_user = st.text_input("Username Baru")
-            new_pass = st.text_input("Password Baru", type="password")
+            new_user = st.text_input('<p class="dark-blue-text">Username Baru</p>')
+            new_pass = st.text_input('<p class="dark-blue-text">Password Baru</p>', type="password")
             submitted = st.form_submit_button("Tambah Admin")
             
             if submitted:
@@ -332,7 +334,7 @@ with tab5:
         valid_to_delete = [u for u in admin_usernames if u != current_user]
         
         if valid_to_delete:
-            del_target = st.selectbox("Pilih Admin untuk dihapus:", valid_to_delete)
+            del_target = st.selectbox('<p class="dark-blue-text">Pilih Admin untuk dihapus:</p>', valid_to_delete)
             
             if st.button("Hapus Admin Terpilih", type="primary"):
                 if auth.delete_admin(del_target):
