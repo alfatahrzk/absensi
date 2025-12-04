@@ -165,14 +165,12 @@ else:
                     cv2.putText(img_result, label_text, (x, y - 10), 
                                cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 255), 2)
 
-                    # --- FITUR ADAPTIF (SELF LEARNING) ---
-                    # Update database hanya jika skor sangat meyakinkan
                     ADAPTIVE_THRESHOLD = THRESHOLD_VAL + 0.08 
                     
                     if score >= ADAPTIVE_THRESHOLD:
-                        db.update_user_embedding(found_user, input_emb)
+                        # Kita tambah variasi baru, JANGAN hapus yang lama
+                        db.add_variation(found_user, input_emb)
                         st.toast(f"Data wajah {found_user} diperbarui otomatis! 🧠", icon="✨")
-                    # -------------------------------------
 
                     # Simpan Log
                     sukses = logger.log_attendance(
