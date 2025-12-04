@@ -106,8 +106,10 @@ if not st.session_state['is_admin']:
     with col2:
         st.title("🔒 Admin Login System")
         
-        form_user = st.text_input("Username")
-        form_pass = st.text_input("Password", type="password")
+        st.markdown('<p class="dark-blue-text">Username</p>', unsafe_allow_html=True)
+        form_user = st.text_input("", label_visibility="collapsed")
+        st.markdown('<p class="dark-blue-text">Password</p>', unsafe_allow_html=True)
+        form_pass = st.text_input("", type="password", label_visibility="collapsed")
         
         if st.button("Masuk", type="primary", use_container_width=True):
             if auth.login(form_user, form_pass):
