@@ -61,6 +61,7 @@ st.markdown("""
         .dark-blue-text {
             color: #003366 !important;
             font-weight: 600;
+            margin-bottom: 0.5rem;
         }
         .stTextInput > div > div > input,
         .stTextInput > div > label {
@@ -68,6 +69,7 @@ st.markdown("""
         }
         .stButton>button, 
         .stDownloadButton>button,
+        .stFormSubmitButton>button,
         button[data-testid="stBaseButton-secondaryFormSubmit"] {
             color: white !important;
             background-color: #003366 !important;
@@ -75,6 +77,7 @@ st.markdown("""
         }
         .stButton>button:hover,
         .stDownloadButton>button:hover,
+        .stFormSubmitButton>button:hover,
         button[data-testid="stBaseButton-secondaryFormSubmit"]:hover {
             background-color: #002244 !important;
             border-color: #001122 !important;
@@ -236,7 +239,7 @@ with tab2:
             st.markdown('<p class="dark-blue-text">Threshold Liveness</p>', unsafe_allow_html=True)
             liveness_thresh = st.slider("", 0.0, 200.0, float(current_conf.get('liveness_threshold', 60.0)), 10.0, label_visibility="collapsed")
         
-        if st.form_submit_button("Simpan Konfigurasi", use_container_width=True, type="primary"):
+        if st.form_submit_button("Simpan Konfigurasi", use_container_width=True):
             if config_mgr.save_config(lat, lon, rad, face_thresh, liveness_thresh):
                 load_config.clear()
                 st.success("✅ Tersimpan!")
