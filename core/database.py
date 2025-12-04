@@ -4,13 +4,14 @@ from qdrant_client.models import VectorParams, Distance, PointStruct, PayloadSch
 import uuid
 import requests 
 import json
+from datetime import datetime
 
 class VectorDB:
     def __init__(self):
         self.client = None
         self.api_key = None
         self.url = None
-        self.collection_name = "absensi" 
+        self.collection_name = "absensi"
         
         try:
             if "QDRANT_URL" in st.secrets:
@@ -45,11 +46,12 @@ class VectorDB:
                 pass
 
     def save_user(self, username, embedding):
-        """Mendaftarkan user baru (Menambah titik baru)"""
+        """Mendaftarkan user baru dengan Timestamp"""
         if not self.client: return False
         
-        # Generate ID Unik setiap kali save
         point_id = str(uuid.uuid4())
+        # --- TAMBAHAN: TIMESTAMP ---
+        now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         
         try:
             self.client.upsert(
@@ -58,7 +60,11 @@ class VectorDB:
                     PointStruct(
                         id=point_id,
                         vector=embedding.tolist(),
-                        payload={"username": username, "role": "user"}
+                        payload={
+                            "username": username, 
+                            "role": "user",
+                            "created_at": now_str # Biar tau kapan data ini dibuat
+                        }
                     )
                 ]
             )
@@ -67,15 +73,9 @@ class VectorDB:
             st.error(f"Gagal simpan user: {e}")
             return False
 
-    # --- FITUR BARU: TAMBAH VARIASI WAJAH (BUKAN REPLACE) ---
     def add_variation(self, username, new_vector):
-        """
-        Menambahkan variasi wajah baru untuk user yang sama.
-        Tidak menghapus data lama, tidak merata-rata.
-        Hanya menambah 'perwakilan' baru di database.
-        """
+        """Menambah variasi wajah baru"""
         return self.save_user(username, new_vector)
-    # -------------------------------------------------------
 
     def search_user(self, embedding, threshold=0.5):
         if not self.url: return None, 0.0
@@ -108,7 +108,6 @@ class VectorDB:
         
         api_endpoint = f"{self.url}/collections/{self.collection_name}/points/scroll"
         headers = {"api-key": self.api_key, "Content-Type": "application/json"}
-        
         payload = {"limit": 1000, "with_payload": True, "with_vector": False}
         
         try:
@@ -123,21 +122,71 @@ class VectorDB:
             st.error(f"Error Get Users: {e}")
             return []
 
-    def delete_user(self, username):
+    # --- FITUR BARU: LIHAT VARIASI WAJAH PER USER ---
+    def get_user_variations(self, username):
+        """Mengambil semua titik data (variasi) milik user tertentu"""
+        if not self.url: return []
+        
+        api_endpoint = f"{self.url}/collections/{self.collection_name}/points/scroll"
+        headers = {"api-key": self.api_key, "Content-Type": "application/json"}
+        
+        payload = {
+            "filter": {
+                "must": [{"key": "username", "match": {"value": username}}]
+            },
+            "limit": 100, # Ambil maksimal 100 variasi
+            "with_payload": True,
+            "with_vector": False
+        }
+        
+        try:
+            response = requests.post(api_endpoint, headers=headers, data=json.dumps(payload), timeout=10)
+            if response.status_code == 200:
+                points = response.json().get('result', {}).get('points', [])
+                # Format data agar mudah dibaca
+                variations = []
+                for p in points:
+                    variations.append({
+                        "id": p["id"],
+                        "created_at": p["payload"].get("created_at", "Lama (Tanpa Tanggal)"),
+                    })
+                # Sortir dari yang terbaru
+                variations.sort(key=lambda x: x['created_at'], reverse=True)
+                return variations
+            return []
+        except Exception as e:
+            st.error(f"Error Get Variations: {e}")
+            return []
+
+    # --- FITUR BARU: HAPUS SATU TITIK SPESIFIK ---
+    def delete_point(self, point_id):
+        """Menghapus satu variasi wajah berdasarkan ID uniknya"""
         if not self.url: return False
         
         api_endpoint = f"{self.url}/collections/{self.collection_name}/points/delete"
         headers = {"api-key": self.api_key, "Content-Type": "application/json"}
         
         payload = {
-            "filter": {
-                "must": [{"key": "username", "match": {"value": username}}]
-            }
+            "points": [point_id] # Hapus berdasarkan ID langsung
         }
         
         try:
             response = requests.post(api_endpoint, headers=headers, data=json.dumps(payload), timeout=10)
             return response.status_code == 200
         except Exception as e:
-            st.error(f"❌ Error Delete: {e}")
+            st.error(f"Error Delete Point: {e}")
+            return False
+
+    def delete_user(self, username):
+        """Menghapus SEMUA data user (Resign)"""
+        # ... (Kode lama delete_user tetap sama) ...
+        # Copy paste fungsi delete_user yang lama di sini
+        if not self.url: return False
+        api_endpoint = f"{self.url}/collections/{self.collection_name}/points/delete"
+        headers = {"api-key": self.api_key, "Content-Type": "application/json"}
+        payload = {"filter": {"must": [{"key": "username", "match": {"value": username}}]}}
+        try:
+            response = requests.post(api_endpoint, headers=headers, data=json.dumps(payload), timeout=10)
+            return response.status_code == 200
+        except Exception as e:
             return False

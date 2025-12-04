@@ -266,45 +266,71 @@ with tab3:
         st.info("Belum ada data.")
 
 # ====================================================
-# TAB 4: KELOLA WAJAH (SAMA)
+# TAB 4: KELOLA WAJAH (UPGRADED)
 # ====================================================
 with tab4:
-    st.header("👥 Database Wajah (Qdrant)")
+    st.header("👥 Manajemen Database Wajah")
     
+    # 1. Pilih User
     with st.spinner("Mengambil daftar karyawan..."):
         users_list = db.get_all_users()
     
     if not users_list:
-        st.warning("Database Qdrant masih kosong.")
+        st.warning("Database kosong.")
     else:
-        df_users = pd.DataFrame(users_list, columns=["Nama Karyawan Terdaftar"])
-        df_users.index = df_users.index + 1
+        col_sel, col_info = st.columns([1, 2])
         
-        col_info, col_table = st.columns([1, 2])
+        with col_sel:
+            selected_user = st.selectbox("Pilih Karyawan:", users_list)
+        
         with col_info:
-            st.success(f"Total: {len(users_list)} Karyawan")
-        with col_table:
-            st.dataframe(df_users, use_container_width=True)
+            st.info("Pilih nama karyawan untuk melihat detail data wajah yang tersimpan.")
 
         st.divider()
-        st.subheader("🗑️ Hapus Data Karyawan")
         
-        col_del1, col_del2 = st.columns([3, 1])
-        with col_del1:
-            st.markdown('<p class="dark-blue-text">Pilih nama karyawan:</p>', unsafe_allow_html=True)
-            user_to_delete = st.selectbox("", users_list, label_visibility="collapsed")
-        with col_del2:
-            st.write("") 
-            st.write("") 
-            if st.button("Hapus Permanen", type="primary"):
-                if user_to_delete:
-                    with st.spinner(f"Menghapus data {user_to_delete}..."):
-                        if db.delete_user(user_to_delete):
-                            st.toast(f"User {user_to_delete} berhasil dihapus!", icon="🗑️")
+        if selected_user:
+            # 2. Ambil Variasi Wajah
+            variations = db.get_user_variations(selected_user)
+            
+            st.subheader(f"Data Wajah: {selected_user}")
+            st.write(f"Total Variasi Tersimpan: **{len(variations)} titik**")
+            
+            if len(variations) > 0:
+                # Tampilkan Tabel Variasi
+                df_var = pd.DataFrame(variations)
+                df_var.columns = ["ID Database (UUID)", "Waktu Direkam"]
+                
+                # Tampilkan tabel biar keren
+                st.dataframe(df_var, use_container_width=True)
+                
+                # 3. Hapus Variasi Spesifik (Misal yang terbaru error)
+                st.markdown("##### 🗑️ Hapus Variasi Tertentu")
+                
+                # Bikin dictionary biar user milih berdasarkan tanggal, bukan ID yang ribet
+                options_map = {f"{v['created_at']} (ID: {v['id'][:8]}...)": v['id'] for v in variations}
+                
+                selected_var_label = st.selectbox("Pilih data yang ingin dihapus:", list(options_map.keys()))
+                selected_var_id = options_map[selected_var_label]
+                
+                if st.button(f"Hapus Data Tanggal {selected_var_label.split('(')[0]}"):
+                    with st.spinner("Menghapus..."):
+                        if db.delete_point(selected_var_id):
+                            st.success("✅ Data berhasil dihapus!")
                             time.sleep(1)
-                            st.rerun() 
+                            st.rerun()
                         else:
-                            st.error("Gagal menghapus user.")
+                            st.error("Gagal menghapus.")
+            
+            st.divider()
+            
+            # 4. Hapus User Total (Tombol Bahaya)
+            with st.expander("🚨 ZONA BAHAYA: Hapus Karyawan Permanen"):
+                st.warning(f"Tindakan ini akan menghapus SEMUA data wajah milik **{selected_user}**.")
+                if st.button(f"Hapus User {selected_user} Selamanya", type="primary"):
+                    if db.delete_user(selected_user):
+                        st.success(f"User {selected_user} telah dihapus total.")
+                        time.sleep(1)
+                        st.rerun()
 
 # ====================================================
 # TAB 5: KELOLA ADMIN (FITUR BARU)
