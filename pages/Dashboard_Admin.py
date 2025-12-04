@@ -68,14 +68,14 @@ st.markdown("""
         }
         .stButton>button, 
         .stDownloadButton>button,
-        .stFormSubmitButton>button[data-testid="stFormSubmitButton"] {
+        button[data-testid="stBaseButton-secondaryFormSubmit"] {
             color: white !important;
             background-color: #003366 !important;
             border: 1px solid #002244 !important;
         }
         .stButton>button:hover,
         .stDownloadButton>button:hover,
-        .stFormSubmitButton>button[data-testid="stFormSubmitButton"]:hover {
+        button[data-testid="stBaseButton-secondaryFormSubmit"]:hover {
             background-color: #002244 !important;
             border-color: #001122 !important;
         }
