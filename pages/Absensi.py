@@ -190,7 +190,7 @@ else:
             face_crop = cv_img[y:y+h, x:x+w]
 
             # --- CEK LIVENESS ---
-            _, liveness_score = engine.check_liveness(face_crop, cv_img)
+            _, liveness_score = engine.check_liveness(face_crop)
             is_real = liveness_score > LIVENESS_VAL
             
             if is_real:
