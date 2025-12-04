@@ -66,12 +66,16 @@ st.markdown("""
         .stTextInput > div > label {
             color: #003366 !important;
         }
-        .stButton>button {
+        .stButton>button, 
+        .stDownloadButton>button,
+        .stFormSubmitButton>button[data-testid="stFormSubmitButton"] {
             color: white !important;
             background-color: #003366 !important;
             border: 1px solid #002244 !important;
         }
-        .stButton>button:hover {
+        .stButton>button:hover,
+        .stDownloadButton>button:hover,
+        .stFormSubmitButton>button[data-testid="stFormSubmitButton"]:hover {
             background-color: #002244 !important;
             border-color: #001122 !important;
         }
