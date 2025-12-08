@@ -52,19 +52,6 @@ st.markdown("""
         .navbar a:last-child {
             margin-right: 0;
         }
-        .icon-container {
-            background-color: #004080;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            text-align: center;
-        }
-        .text-primary {
-            color: #003366;
-        }
-        .content-margin {
-            margin-top: 20px;
-        }
     </style>
 """, unsafe_allow_html=True)
 
@@ -83,21 +70,21 @@ st.markdown("""
 with st.container():
     col1, col2 = st.columns([1, 2])
     with col1:
-        st.markdown('<div class="icon-container"><img src="https://cdn-icons-png.flaticon.com/512/3652/3652191.png" width="150"></div>', unsafe_allow_html=True)
+        st.markdown('<div style="background-color: #004080; padding: 20px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); text-align: center;"><img src="https://cdn-icons-png.flaticon.com/512/3652/3652191.png" width="150"></div>', unsafe_allow_html=True)
     with col2:
         st.markdown("""
         <div class='content'>
-            <h3 class='text-primary' style='margin-top: 0;'>Selamat Datang di AuraSense</h3>
-            <p class='text-primary'>Sistem ini menggunakan teknologi <strong>Face Recognition berbasis AI (ResNet50)</strong> 
+            <h3 style='color: #003366; margin-top: 0;'>Selamat Datang di AuraSense</h3>
+            <p style='color: #003366;'>Sistem ini menggunakan teknologi <strong>Face Recognition berbasis AI (ResNet50)</strong> 
             with penyimpanan <strong>Vector Database (Qdrant)</strong>.</p>
         </div>
         """, unsafe_allow_html=True)
 
     st.markdown("""
-    <div class='content content-margin'>
-        <h3 class='text-primary'>Menu Utama</h3>
-        <p class='text-primary'>Silakan pilih menu di sidebar (sebelah kiri):</p>
-        <ul class='text-primary'>
+    <div class='content' style='margin-top: 20px;'>
+        <h3 style='color: #003366;'>Menu Utama</h3>
+        <p style='color: #003366;'>Silakan pilih menu di sidebar (sebelah kiri):</p>
+        <ul style='color: #003366;'>
             <li><strong>Registrasi Wajah:</strong> (Khusus Admin) Untuk mendaftarkan karyawan baru dengan 8 pose.</li>
             <li><strong>Absensi User:</strong> (Akan dibuat selanjutnya) Untuk melakukan presensi harian.</li>
         </ul>
