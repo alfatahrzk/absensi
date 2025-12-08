@@ -25,14 +25,14 @@ st.markdown("""
         .main { background-color: #e6f2ff; }
         .stApp { background-color: #e6f2ff; }
         .header { background-color: #003366; color: white; padding: 15px; border-radius: 10px; margin-bottom: 20px; text-align: center; }
-        .stRadio > div { background-color: #003366; padding: 10px; border-radius: 10px; max-width: 800px; margin: 0 auto; color: #ffffff !important;}
+        .stRadio > div { background-color: #003366; padding: 10px; border-radius: 10px; }
         .stRadio > div > label { color: #ffffff !important; font-weight: 600; font-size: 16px; }
         .stRadio > div[data-baseweb='radio'] > div:first-child > div:first-child > div { background-color: #003366 !important; border-color: #003366 !important; }
         .stRadio > div[data-baseweb='radio'] > div > div > label[data-testid="stMarkdownContainer"] > span { color: #ffffff !important; }
         .stRadio > div[data-baseweb='radio'] > div > div > label > span { color: #ffffff !important; }
         .stRadio > div[data-baseweb='radio'] > div > div > span { color: #ffffff !important; }
         .stRadio [data-testid="stMarkdownContainer"] span { color: #ffffff !important; }
-        .stRadio div {  }
+        .stRadio div { color: #ffffff !important; }
         [data-testid="stHorizontalBlock"] { background-color: #004080; padding: 10px 20px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; }
         [data-testid="stHorizontalBlock"] a { color: #ffffff !important; font-weight: 600; }
         .navbar {
