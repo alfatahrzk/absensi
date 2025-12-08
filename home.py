@@ -65,7 +65,7 @@ st.markdown("""
 with st.container():
     col1, col2 = st.columns([1, 2])
     with col1:
-        st.image("https://cdn-icons-png.flaticon.com/512/3652/3652191.png", width=150)
+        st.markdown('<div style="text-align: center;"><img src="https://cdn-icons-png.flaticon.com/512/3652/3652191.png" width="150"></div>', unsafe_allow_html=True)
     with col2:
         st.markdown("""
         <div class='content'>
