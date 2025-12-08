@@ -66,11 +66,12 @@ st.markdown("""
 st.markdown('<div class="header"><h1>🏢 AuraSense Presence</h1></div>', unsafe_allow_html=True)
 
 # Navigation links dengan background biru (navbar)
-nav_col1, nav_col2 = st.columns([1, 1])
-with nav_col1:
-    st.page_link("home.py", label="🏠 Home")
-with nav_col2:
-    st.page_link("pages/Absensi.py", label="📸 Absen")
+st.markdown("""
+<div style="display: flex; justify-content: space-between; margin: 20px 0;">
+    <a href="home.py" style="padding: 10px 20px; background-color: #1E88E5; color: white; text-decoration: none; border-radius: 5px;">🏠 Home</a>
+    <a href="pages/Absensi.py" style="padding: 10px 20px; background-color: #1E88E5; color: white; text-decoration: none; border-radius: 5px;">📸 Absen</a>
+</div>
+""", unsafe_allow_html=True)
 
 # Main Content
 with st.container():
