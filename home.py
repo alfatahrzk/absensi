@@ -66,8 +66,8 @@ st.markdown("""
         .stPageLink {
             color: #ffffff !important;
         }
-        /* Force white color for navigation text */
-        [data-testid="stHorizontalBlock"] * {
+        /* Force white color for navigation links only */
+        [data-testid="stHorizontalBlock"] .stPageLink {
             color: #ffffff !important;
         }
     </style>
