@@ -102,17 +102,24 @@ else:
         st.error(f"❌ Di Luar Kantor! Jarak: {distance:.3f} km")
         st.stop()
 
-# 2. PILIH TIPE ABSENSI
-st.markdown("""
-<div style='text-align: left; margin-bottom: 20px;'>
-    <h3 style='color: #003366; margin-bottom: 10px;'>Pilih Jenis Absensi</h3>
-</div>
-""", unsafe_allow_html=True)
-
-absen_type = st.radio("", ["Masuk", "Keluar"], horizontal=True, label_visibility="collapsed")
-
 if 'berhasil_absen' not in st.session_state:
     st.session_state['berhasil_absen'] = None
+
+# Inisialisasi absen_type untuk menyimpan pilihan user
+if 'absen_type' not in st.session_state:
+    st.session_state['absen_type'] = "Masuk"
+
+# 2. PILIH TIPE ABSENSI
+if st.session_state.get('berhasil_absen') is None:
+    st.markdown("""
+    <div style='text-align: left; margin-bottom: 20px;'>
+        <h3 style='color: #003366; margin-bottom: 10px;'>Pilih Jenis Absensi</h3>
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.session_state['absen_type'] = st.radio("", ["Masuk", "Keluar"], horizontal=True, label_visibility="collapsed")
+
+absen_type = st.session_state['absen_type']
 
 # --- UI LOGIC ---
 
