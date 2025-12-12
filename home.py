@@ -52,21 +52,6 @@ st.markdown("""
         .navbar a:last-child {
             margin-right: 0;
         }
-        .st-emotion-cache-pkbazv {
-            color: #ffffff !important;
-        }
-        /* Additional styling for page links */
-        .stPageLink a {
-            color: #ffffff !important;
-            font-weight: 600;
-        }
-        /* Target all links within navigation */
-        [data-testid="stHorizontalBlock"] .stPageLink a,
-        [data-testid="stHorizontalBlock"] a,
-        .stPageLink a,
-        .stPageLink {
-            color: #ffffff !important;
-        }
     </style>
 """, unsafe_allow_html=True)
 
