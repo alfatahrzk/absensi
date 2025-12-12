@@ -228,7 +228,7 @@ else:
                             validation_status="Berhasil"
                         )
                     
-                       if sukses:
+                        if sukses:
                             st.session_state['berhasil_absen'] = {
                                 'nama': found_user,
                                 'skor': f"{score:.4f}",
