@@ -199,59 +199,58 @@ else:
                     # =======================================================
                     
                     if is_valid:                    
-                    # Gambar Kotak & Nama
-                    img_result = cv_img.copy()
-                    cv2.rectangle(img_result, (x, y), (x+w, y+h), (0, 255, 0), 3)
-                    label_text = f"{found_user} ({score:.2f})"
-                    (w_text, h_text), _ = cv2.getTextSize(label_text, cv2.FONT_HERSHEY_SIMPLEX, 0.8, 2)
-                    cv2.rectangle(img_result, (x, y - 35), (x + w_text, y), (0, 51, 102), -1)
-                    cv2.putText(img_result, label_text, (x, y - 10), 
-                               cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 255), 2)
+                        img_result = cv_img.copy()
+                        cv2.rectangle(img_result, (x, y), (x+w, y+h), (0, 255, 0), 3)
+                        label_text = f"{found_user} ({score:.2f})"
+                        (w_text, h_text), _ = cv2.getTextSize(label_text, cv2.FONT_HERSHEY_SIMPLEX, 0.8, 2)
+                        cv2.rectangle(img_result, (x, y - 35), (x + w_text, y), (0, 51, 102), -1)
+                        cv2.putText(img_result, label_text, (x, y - 10), 
+                                   cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 255), 2)
 
-                    # --- FITUR ADAPTIF (Perbaikan Indentasi) ---
-                    ADAPTIVE_THRESHOLD = THRESHOLD_VAL + 0.08 
+                        # --- FITUR ADAPTIF (Perbaikan Indentasi) ---
+                        ADAPTIVE_THRESHOLD = THRESHOLD_VAL + 0.08 
                     
-                    if score >= ADAPTIVE_THRESHOLD:
-                        db.add_variation(found_user, input_emb)
-                        st.toast(f"Data wajah {found_user} diperbarui otomatis! 🧠", icon="✨")
-                    # ------------------------------------------
+                        if score >= ADAPTIVE_THRESHOLD:
+                            db.add_variation(found_user, input_emb)
+                            st.toast(f"Data wajah {found_user} diperbarui otomatis! 🧠", icon="✨")
+                        # ------------------------------------------
 
-                    # Simpan Log
-                    sukses = logger.log_attendance(
-                        name=found_user, 
-                        status=absen_type, 
-                        location_dist=distance, 
-                        address=current_address,
-                        lat=user_lat,
-                        lon=user_lon,
-                        similarity=score,
-                        liveness=100.0, # Dummy
-                        validation_status="Berhasil"
-                    )
+                        # Simpan Log
+                        sukses = logger.log_attendance(
+                            name=found_user, 
+                            status=absen_type, 
+                            location_dist=distance, 
+                            address=current_address,
+                            lat=user_lat,
+                            lon=user_lon,
+                            similarity=score,
+                            liveness=100.0, # Dummy
+                            validation_status="Berhasil"
+                        )
                     
-                    if sukses:
-                        st.session_state['berhasil_absen'] = {
-                            'nama': found_user,
-                            'skor': f"{score:.4f}",
-                            'waktu': (datetime.now() + timedelta(hours=7)).strftime('%H:%M:%S'), 
-                            'jarak': f"{distance:.3f}",
-                            'alamat': current_address,
-                            'foto_bukti': img_result
-                        }
-                        st.rerun()
+                       if sukses:
+                            st.session_state['berhasil_absen'] = {
+                                'nama': found_user,
+                                'skor': f"{score:.4f}",
+                                'waktu': (datetime.now() + timedelta(hours=7)).strftime('%H:%M:%S'), 
+                                'jarak': f"{distance:.3f}",
+                                'alamat': current_address,
+                               'foto_bukti': img_result
+                            }
+                            st.rerun()
+                        else:
+                            st.error("Gagal terhubung ke Database Log.")
                     else:
-                        st.error("Gagal terhubung ke Database Log.")
-                else:
-                    # Gagal
-                    st.error(f"❌ Ditolak! Wajah tidak dikenali.\nHarap hubungi admin!")
-                    logger.log_attendance(
-                        name=f"{found_user} (Ditolak)",
-                        status="Gagal",
-                        location_dist=distance,
-                        address=current_address,
-                        lat=user_lat,
-                        lon=user_lon,
-                        similarity=score,
-                        liveness=0.0,
-                        validation_status="Gagal: Skor Rendah"
-                    )
+                        # Gagal
+                        st.error(f"❌ Ditolak! Wajah tidak dikenali.\nHarap hubungi admin!")
+                        logger.log_attendance(
+                            name=f"{found_user} (Ditolak)",
+                            status="Gagal",
+                            location_dist=distance,
+                            address=current_address,
+                            lat=user_lat,
+                            lon=user_lon,
+                            similarity=score,
+                            liveness=0.0,
+                            validation_status="Gagal: Skor Rendah"
+                        )
